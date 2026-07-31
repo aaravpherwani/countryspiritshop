@@ -13,10 +13,11 @@
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --border: #e2e8f0;
+      --text-muted: #64748b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--primary); padding: 16px; }
+    body { background-color: var(--bg); color: var(--primary); padding: 16px; overflow-x: hidden; }
 
     /* Filter Controls */
     .controls {
@@ -38,6 +39,7 @@
       font-size: 14px;
       outline: none;
       flex: 1 1 200px;
+      background-color: #fff;
     }
 
     .controls input:focus, .controls select:focus {
@@ -49,6 +51,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
+      width: 100%;
     }
 
     /* Product Card */
@@ -60,21 +63,33 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.15s, box-shadow 0.15s;
+      height: 100%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
 
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
-
-    .card img {
+    /* Pure CSS Placeholder Image Container */
+    .img-container {
       width: 100%;
-      height: 180px;
-      object-fit: contain;
-      border-radius: 6px;
-      margin-bottom: 12px;
+      height: 160px;
       background-color: #f1f5f9;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      overflow: hidden;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .badge {
@@ -87,31 +102,35 @@
       border-radius: 4px;
       text-transform: uppercase;
       margin-bottom: 8px;
+      word-break: break-word;
     }
 
+    /* Strict Text Truncation */
     .card h3 {
       font-size: 14px;
       font-weight: 600;
-      line-height: 1.3;
-      height: 38px;
-      overflow: hidden;
+      line-height: 1.4;
+      color: var(--primary);
+      margin-bottom: 12px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
     }
 
     .card-meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 12px;
       padding-top: 10px;
       border-top: 1px solid var(--border);
+      margin-top: auto;
     }
 
-    .size { font-size: 13px; color: #64748b; }
+    .size { font-size: 12px; color: var(--text-muted); font-weight: 500; }
     .price { font-size: 16px; font-weight: 700; color: var(--accent); }
-    .loading, .no-results { grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b; }
+    .loading, .no-results { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -136,29 +155,30 @@
   <script>
     let catalogData = [];
 
-    // Parse CSV directly in the browser
+    // Parse CSV directly in browser
     Papa.parse('items-7_30_2622_08_49.csv', {
       download: true,
       header: true,
       skipEmptyLines: true,
       complete: function(results) {
-        catalogData = results.data.map(row => {
-          const rawPrice = parseFloat(row['Unit Price']);
-          return {
-            name: (row['Name'] || '').trim(),
-            size: (row['Size'] || '').trim(),
-            price: isNaN(rawPrice) ? 0.0 : rawPrice,
-            category: (row['Category Name'] || 'Uncategorized').trim(),
-            // Default placeholder image
-            image: "https://via.placeholder.com/200x200?text=No+Image"
-          };
-        });
+        catalogData = results.data
+          .filter(row => row['Name'] && row['Name'].trim() !== '')
+          .map(row => {
+            const rawPrice = parseFloat(row['Unit Price']);
+            return {
+              name: (row['Name'] || '').trim(),
+              size: (row['Size'] || '').trim(),
+              price: isNaN(rawPrice) ? 0.0 : rawPrice,
+              category: (row['Category Name'] || 'Uncategorized').trim(),
+              image: (row['Image URL'] || '').trim() // Optional: pull from column if added later
+            };
+          });
 
         populateCategories(catalogData);
         renderCatalog();
       },
       error: function(err) {
-        document.getElementById('catalogGrid').innerHTML = `<div class="no-results">Error loading CSV file. Make sure items-7_30_2622_08_49.csv exists in the repo.</div>`;
+        document.getElementById('catalogGrid').innerHTML = `<div class="no-results">Error loading CSV file. Make sure items-7_30_2622_08_49.csv exists in your GitHub repository.</div>`;
       }
     });
 
@@ -194,23 +214,32 @@
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="no-results">No items found matching your filter criteria.</div>`;
+        grid.innerHTML = `<div class="no-results">No items found matching your criteria.</div>`;
         return;
       }
 
-      grid.innerHTML = filtered.map(item => `
-        <div class="card">
-          <div>
-            <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" />
-            <span class="badge">${item.category}</span>
-            <h3>${item.name}</h3>
+      grid.innerHTML = filtered.map(item => {
+        // Fallback to stylized box icon if no image URL is supplied
+        const imageHTML = item.image 
+          ? `<img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.parentElement.innerHTML='🍷 NO IMAGE'"/>`
+          : `🍷 NO IMAGE`;
+
+        return `
+          <div class="card">
+            <div>
+              <div class="img-container">
+                ${imageHTML}
+              </div>
+              <span class="badge">${item.category}</span>
+              <h3>${item.name}</h3>
+            </div>
+            <div class="card-meta">
+              <span class="size">${item.size || 'N/A'}</span>
+              <span class="price">$${item.price.toFixed(2)}</span>
+            </div>
           </div>
-          <div class="card-meta">
-            <span class="size">${item.size || 'N/A'}</span>
-            <span class="price">$${item.price.toFixed(2)}</span>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     document.getElementById('searchInput').addEventListener('input', renderCatalog);
