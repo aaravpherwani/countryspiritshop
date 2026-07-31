@@ -1,156 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Image Liquor Catalog</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <style>
-        :root { --accent: #ffc107; --bg: #0f0f0f; --card-bg: #1e1e1e; }
-        body { background-color: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif; }
-        .sticky-top { background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #333; padding: 15px 0; }
-        .card { background: var(--card-bg); border: 1px solid #2a2a2a; transition: 0.25s; height: 100%; border-radius: 12px; overflow: hidden; }
-        .card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .img-container { height: 220px; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; padding: 15px; }
-        .product-img { max-height: 100%; max-width: 100%; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
-        .qty-label { position: absolute; bottom: 8px; right: 8px; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; }
-        .search-bar { border-radius: 30px; padding-left: 20px; border: 1px solid #444; }
-        #loading { color: var(--accent); text-align: center; margin-top: 100px; font-weight: bold; }
-        .placeholder-glow { background: #eee; animation: glow 1.5s infinite; }
-        @keyframes glow { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Liquor Catalog</title>
+  <!-- Load PapaParse for in-browser CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--primary); padding: 16px; }
+
+    /* Filter Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .controls input, .controls select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      flex: 1 1 200px;
+    }
+
+    .controls input:focus, .controls select:focus {
+      border-color: var(--accent);
+    }
+
+    /* Grid Layout */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    /* Product Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      background-color: #f1f5f9;
+    }
+
+    .badge {
+      align-self: flex-start;
+      background: #e2e8f0;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+      height: 38px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .size { font-size: 13px; color: #64748b; }
+    .price { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .loading, .no-results { grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b; }
+  </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div id="loading">Syncing 17,000+ Items with Global Database...</div>
-</div>
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Search product or category..." />
+    <select id="categoryFilter">
+      <option value="ALL">All Categories</option>
+    </select>
+    <select id="sortSelect">
+      <option value="name-asc">Sort: Name (A-Z)</option>
+      <option value="name-desc">Sort: Name (Z-A)</option>
+      <option value="price-asc">Sort: Price (Low to High)</option>
+      <option value="price-desc">Sort: Price (High to Low)</option>
+    </select>
+  </div>
 
-<div class="sticky-top">
-    <div class="container">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-6">
-                <input type="text" id="searchInput" class="form-control bg-dark text-white search-bar" placeholder="Search by name, brand, or type...">
-            </div>
-            <div class="col-md-3">
-                <select id="catFilter" class="form-select bg-dark text-white border-secondary rounded-pill">
-                    <option value="">All Types</option>
-                </select>
-            </div>
-            <div class="col-md-3 text-end small text-secondary">
-                <span id="counter">0</span> items loaded
-            </div>
-        </div>
-    </div>
-</div>
+  <div id="catalogGrid" class="catalog-grid">
+    <div class="loading">Loading inventory catalog...</div>
+  </div>
 
-<div class="container mt-4">
-    <div id="catalog" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
-        <!-- Products will inject here -->
-    </div>
-    <div class="text-center my-5">
-        <button id="loadMore" class="btn btn-warning px-5 rounded-pill fw-bold">Load More Products</button>
-    </div>
-</div>
+  <script>
+    let catalogData = [];
 
-<script>
-    const CSV_URL = 'https://raw.githubusercontent.com/aaravpherwani/countryspiritshop/refs/heads/main/stock-7_30_2620_16_47.csv'; // <--- PASTE YOUR LINK HERE
-    const PAGE_SIZE = 40;
-    
-    let rawInventory = [];
-    let filteredList = [];
-    let currentIdx = 0;
-
-    // Database Image Fetcher
-    async function fetchSpecificImage(productName) {
-        try {
-            // Cleans the name for search (removes sizes like 750ml)
-            const query = productName.replace(/\d+ML|\d+L|\d+OZ/gi, '').trim();
-            const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=1`);
-            const data = await response.json();
-            
-            if (data.products && data.products[0] && data.products[0].image_url) {
-                return {
-                    img: data.products[0].image_url,
-                    type: data.products[0].categories_tags[0]?.replace('en:', '').replace(/-/g, ' ') || 'Liquor'
-                };
-            }
-        } catch (e) { console.error("DB Error", e); }
-        return { img: 'https://via.placeholder.com/300x500?text=No+Photo', type: 'Liquor' };
-    }
-
-    function init() {
-        Papa.parse(CSV_URL, {
-            download: true,
-            header: true,
-            complete: (results) => {
-                document.getElementById('loading-screen').style.display = 'none';
-                rawInventory = results.data.filter(row => row.Name);
-                filteredList = [...rawInventory];
-                renderBatch();
-            }
+    // Parse CSV directly in the browser
+    Papa.parse('items-7_30_2622_08_49.csv', {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        catalogData = results.data.map(row => {
+          const rawPrice = parseFloat(row['Unit Price']);
+          return {
+            name: (row['Name'] || '').trim(),
+            size: (row['Size'] || '').trim(),
+            price: isNaN(rawPrice) ? 0.0 : rawPrice,
+            category: (row['Category Name'] || 'Uncategorized').trim(),
+            // Default placeholder image
+            image: "https://via.placeholder.com/200x200?text=No+Image"
+          };
         });
-    }
 
-    async function renderBatch() {
-        const grid = document.getElementById('catalog');
-        const slice = filteredList.slice(currentIdx, currentIdx + PAGE_SIZE);
-
-        for (let item of slice) {
-            const col = document.createElement('div');
-            col.className = 'col';
-            
-            // Create a temporary card with a loading state
-            col.innerHTML = `
-                <div class="card p-2">
-                    <div class="img-container placeholder-glow">
-                        <div class="spinner-border spinner-border-sm text-dark"></div>
-                    </div>
-                    <div class="p-2">
-                        <div class="small text-warning mb-1">Searching...</div>
-                        <div class="fw-bold small" style="height:2.5em; overflow:hidden">${item.Name}</div>
-                    </div>
-                </div>
-            `;
-            grid.appendChild(col);
-
-            // Fetch specific image from the global database
-            const dbData = await fetchSpecificImage(item.Name);
-            
-            // Update the card with real data
-            const stockColor = parseFloat(item.Qty) > 0 ? 'bg-success' : 'bg-danger';
-            col.innerHTML = `
-                <div class="card">
-                    <div class="img-container">
-                        <img src="${dbData.img}" class="product-img" loading="lazy">
-                        <span class="qty-label ${stockColor}">${Math.floor(item.Qty)} in stock</span>
-                    </div>
-                    <div class="p-3">
-                        <div class="small text-warning text-uppercase mb-1" style="font-size:0.65rem">${dbData.type}</div>
-                        <div class="fw-bold small mb-2" style="height:2.5em; overflow:hidden">${item.Name}</div>
-                        <div class="text-secondary small" style="font-size:0.7rem">Supplier: ${item.Supplier}</div>
-                    </div>
-                </div>
-            `;
-        }
-        currentIdx += PAGE_SIZE;
-        document.getElementById('counter').innerText = currentIdx;
-    }
-
-    // Live Search Logic
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        filteredList = rawInventory.filter(i => i.Name.toLowerCase().includes(val));
-        currentIdx = 0;
-        document.getElementById('catalog').innerHTML = '';
-        renderBatch();
+        populateCategories(catalogData);
+        renderCatalog();
+      },
+      error: function(err) {
+        document.getElementById('catalogGrid').innerHTML = `<div class="no-results">Error loading CSV file. Make sure items-7_30_2622_08_49.csv exists in the repo.</div>`;
+      }
     });
 
-    document.getElementById('loadMore').addEventListener('click', renderBatch);
+    function populateCategories(items) {
+      const categorySelect = document.getElementById('categoryFilter');
+      const categories = [...new Set(items.map(i => i.category))].filter(Boolean).sort();
+      
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        categorySelect.appendChild(opt);
+      });
+    }
 
-    init();
-</script>
+    function renderCatalog() {
+      const grid = document.getElementById('catalogGrid');
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const selectedCategory = document.getElementById('categoryFilter').value;
+      const sortBy = document.getElementById('sortSelect').value;
 
+      let filtered = catalogData.filter(item => {
+        const matchesQuery = item.name.toLowerCase().includes(query) || item.category.toLowerCase().includes(query);
+        const matchesCat = selectedCategory === 'ALL' || item.category === selectedCategory;
+        return matchesQuery && matchesCat;
+      });
+
+      filtered.sort((a, b) => {
+        if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+        if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+        if (sortBy === 'price-asc') return a.price - b.price;
+        if (sortBy === 'price-desc') return b.price - a.price;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="no-results">No items found matching your filter criteria.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => `
+        <div class="card">
+          <div>
+            <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" />
+            <span class="badge">${item.category}</span>
+            <h3>${item.name}</h3>
+          </div>
+          <div class="card-meta">
+            <span class="size">${item.size || 'N/A'}</span>
+            <span class="price">$${item.price.toFixed(2)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderCatalog);
+    document.getElementById('categoryFilter').addEventListener('change', renderCatalog);
+    document.getElementById('sortSelect').addEventListener('change', renderCatalog);
+  </script>
 </body>
 </html>
