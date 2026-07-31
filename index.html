@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Country Spirit Shop — Catalog</title>
+<link rel="preconnect" href="https://images.openfoodfacts.org">
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--ink:#171717;--muted:#6b6b6b;--line:#e5e5e5;--accent:#7b1e25}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:1400px;margin:auto;padding:24px}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.head{max-width:1400px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-weight:800;font-size:22px}.sub{color:var(--muted);font-size:13px;margin-top:3px}
+.controls{display:grid;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+input,select,button{font:inherit;border:1px solid #d7d7d7;border-radius:10px;padding:11px 12px;background:#fff}
+input:focus,select:focus{outline:2px solid #cda8aa;outline-offset:1px}
+.stats{display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.pic{height:210px;background:#f1f1ef;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:contain;padding:12px}
+.placeholder{font-size:42px;font-weight:800;color:#b9b9b5}
+.body{padding:13px}.name{font-weight:750;line-height:1.25;margin-bottom:7px}.meta{font-size:12px;color:var(--muted);min-height:17px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.tag{font-size:11px;border-radius:999px;background:#f0e4e5;color:#6a1c21;padding:4px 7px}
+.price{font-weight:800;font-size:17px;margin-top:11px}
+.empty{padding:60px;text-align:center;color:var(--muted);grid-column:1/-1;background:#fff;border:1px dashed #ccc;border-radius:14px}
+.age{font-size:12px;color:var(--muted);text-align:center;padding:22px 0}
+@media(max-width:800px){.controls{grid-template-columns:1fr 1fr}.controls input{grid-column:1/-1}.grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}.pic{height:175px}.head{padding:14px 16px}.wrap{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><div class="brand">Country Spirit Shop</div><div class="sub">Product Catalog</div></div><div id="count"></div></div></header>
+<main class="wrap">
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search brand or product…">
+    <select id="group"><option value="">All categories</option></select>
+    <select id="category"><option value="">All subcategories</option></select>
+    <select id="sort">
+      <option value="name">Name A–Z</option>
+      <option value="name-desc">Name Z–A</option>
+      <option value="price-low">Price: Low–High</option>
+      <option value="price-high">Price: High–Low</option>
+      <option value="category">Category</option>
+    </select>
+  </div>
+  <div class="stats"><span id="resultText">Loading catalog…</span><button id="clear" type="button">Clear filters</button></div>
+  <section id="grid" class="grid"></section>
+  <div class="age">Please drink responsibly. Products, prices, and availability may change. Age restrictions apply.</div>
+</main>
+<script>
+const state={items:[], filtered:[]};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function money(n){return Number.isFinite(n)?new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n):""}
+function initials(name){return esc(name.split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"?")}
+function populate(selectId, values){
+  const el=$(selectId), old=el.value;
+  const label=selectId==="group"?"All categories":"All subcategories";
+  el.innerHTML=`<option value="">${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
+  if(values.includes(old)) el.value=old;
+}
+function refreshOptions(){
+  const groups=[...new Set(state.items.map(x=>x.group).filter(Boolean))].sort();
+  populate("group",groups);
+  const selectedGroup=$("group").value;
+  const cats=[...new Set(state.items.filter(x=>!selectedGroup||x.group===selectedGroup).map(x=>x.category).filter(Boolean))].sort();
+  populate("category",cats);
+}
+function apply(){
+  const q=$("search").value.trim().toLowerCase(), g=$("group").value, c=$("category").value;
+  state.filtered=state.items.filter(x=>
+    (!q || `${x.name} ${x.category} ${x.group} ${x.size}`.toLowerCase().includes(q)) &&
+    (!g || x.group===g) && (!c || x.category===c)
+  );
+  const mode=$("sort").value;
+  state.filtered.sort((a,b)=>{
+    if(mode==="price-low") return (a.price??Infinity)-(b.price??Infinity);
+    if(mode==="price-high") return (b.price??-Infinity)-(a.price??-Infinity);
+    if(mode==="category") return `${a.category}${a.name}`.localeCompare(`${b.category}${b.name}`);
+    const r=a.name.localeCompare(b.name); return mode==="name-desc"?-r:r;
+  });
+  $("resultText").textContent=`Showing ${state.filtered.length.toLocaleString()} of ${state.items.length.toLocaleString()} products`;
+  $("count").textContent=`${state.items.length.toLocaleString()} items`;
+  render();
+}
+function render(){
+  const grid=$("grid");
+  if(!state.filtered.length){grid.innerHTML='<div class="empty">No products match your filters.</div>';return}
+  // Render a manageable first page; add more as the user scrolls.
+  const page=state.filtered.slice(0,200);
+  grid.innerHTML=page.map((x,i)=>`
+    <article class="card">
+      <div class="pic">
+        ${x.image?`<img loading="lazy" src="${esc(x.image)}" alt="${esc(x.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`:""}
+        <div class="placeholder" ${x.image?'style="display:none"':''}>${initials(x.name)}</div>
+      </div>
+      <div class="body">
+        <div class="name">${esc(x.name)}</div>
+        <div class="meta">${esc(x.size)}</div>
+        <div class="tags"><span class="tag">${esc(x.category)}</span>${x.group&&x.group!==x.category?`<span class="tag">${esc(x.group)}</span>`:""}</div>
+        ${x.price!=null?`<div class="price">${money(x.price)}</div>`:""}
+      </div>
+    </article>`).join("");
+  if(state.filtered.length>200) grid.insertAdjacentHTML("beforeend",`<div class="empty">Showing the first 200 matches. Narrow your search or filters to find a specific product.</div>`);
+}
+$("search").addEventListener("input",apply);
+$("sort").addEventListener("change",apply);
+$("group").addEventListener("change",()=>{refreshOptions();apply()});
+$("category").addEventListener("change",apply);
+$("clear").addEventListener("click",()=>{$("search").value="";$("group").value="";refreshOptions();$("category").value="";$("sort").value="name";apply()});
+fetch("catalog.json").then(r=>{if(!r.ok)throw Error("Catalog failed");return r.json()}).then(items=>{
+  state.items=items.filter(x=>x.name);
+  refreshOptions();apply();
+}).catch(e=>{$("resultText").textContent="Could not load catalog."; $("grid").innerHTML='<div class="empty">Catalog data could not be loaded. Make sure catalog.json is in the same folder.</div>'});
+</script>
+</body>
+</html>
