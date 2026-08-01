@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>In-Stock Inventory</title>
+  <!-- Fast CSV Parser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-color: #0f172a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .input-group {
+      flex: 1 1 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #64748b;
+    }
+
+    input, select {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .stats {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background-color: #e2e8f0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      background-color: #e0f2fe;
+      color: #0369a1;
+      font-weight: 500;
+    }
+
+    .price {
+      font-weight: 600;
+      color: #15803d;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="controls">
+    <div class="input-group">
+      <label for="searchInput">Search Item Name</label>
+      <input type="text" id="searchInput" placeholder="Type item name..." />
+    </div>
+
+    <div class="input-group">
+      <label for="categoryFilter">Category</label>
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label for="sortBy">Sort By</label>
+      <select id="sortBy">
+        <option value="name-asc">Name (A-Z)</option>
+        <option value="name-desc">Name (Z-A)</option>
+        <option value="price-asc">Price (Low to High)</option>
+        <option value="price-desc">Price (High to Low)</option>
+        <option value="qty-desc">Quantity (High to Low)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats" id="itemCount">Loading inventory from CSV...</div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="setSort('name')">Item Name ↕</th>
+          <th onclick="setSort('category')">Category ↕</th>
+          <th onclick="setSort('size')">Size ↕</th>
+          <th onclick="setSort('price')">Price ↕</th>
+          <th onclick="setSort('qty')">In Stock ↕</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let inventory = [];
+  let currentSort = { field: 'name', dir: 'asc' };
+
+  // Parse the local CSV directly
+  Papa.parse('items-7_30_2622_08_49.csv', {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      inventory = results.data
+        .map(row => {
+          const qty = parseFloat((row['Qty On Hand'] || '0').replace(/,/g, '')) || 0;
+          const price = parseFloat((row['Unit Price'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+          return {
+            name: (row['Name'] || '').trim(),
+            category: (row['Category Name'] || 'Uncategorized').trim(),
+            size: (row['Size'] || '').trim(),
+            price: price,
+            qty: qty
+          };
+        })
+        // Filter strictly in-stock items
+        .filter(item => item.name && item.qty > 0);
+
+      populateCategories();
+      renderTable();
+    },
+    error: function(err) {
+      document.getElementById('itemCount').innerText = 'Failed to load inventory CSV.';
+      console.error(err);
+    }
+  });
+
+  function populateCategories() {
+    const categories = [...new Set(inventory.map(item => item.category))].sort();
+    const select = document.getElementById('categoryFilter');
+    categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      select.appendChild(opt);
+    });
+  }
+
+  function setSort(field) {
+    if (currentSort.field === field) {
+      currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = field;
+      currentSort.dir = 'asc';
+    }
+    document.getElementById('sortBy').value = `${field}-${currentSort.dir}`;
+    renderTable();
+  }
+
+  function getFilteredAndSortedData() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    const [sortField, sortDir] = document.getElementById('sortBy').value.split('-');
+
+    return inventory.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(search);
+      const matchesCat = !category || item.category === category;
+      return matchesSearch && matchesCat;
+    }).sort((a, b) => {
+      let valA = a[sortField];
+      let valB = b[sortField];
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function renderTable() {
+    const filtered = getFilteredAndSortedData();
+    const tbody = document.getElementById('inventoryTable');
+    const countEl = document.getElementById('itemCount');
+
+    countEl.innerText = `Showing ${filtered.length} in-stock item(s)`;
+    tbody.innerHTML = '';
+
+    filtered.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(item.name)}</strong></td>
+        <td><span class="badge">${escapeHtml(item.category)}</span></td>
+        <td>${escapeHtml(item.size || '-')}</td>
+        <td class="price">$${item.price.toFixed(2)}</td>
+        <td>${item.qty}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // Event Listeners
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('categoryFilter').addEventListener('change', renderTable);
+  document.getElementById('sortBy').addEventListener('change', (e) => {
+    const [field, dir] = e.target.value.split('-');
+    currentSort = { field, dir };
+    renderTable();
+  });
+</script>
+
+</body>
+</html>
