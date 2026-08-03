@@ -163,7 +163,7 @@
       gap: 1.25rem;
     }
 
-    /* Product Card */
+    /* Product Card (Clickable Link Style) */
     .product-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -173,16 +173,22 @@
       flex-direction: column;
       justify-content: space-between;
       box-shadow: var(--shadow-sm);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       position: relative;
       overflow: hidden;
+      text-decoration: none; /* Removes default link underline */
+      color: inherit;       /* Inherits standard text color */
+      cursor: pointer;
     }
 
     @media (hover: hover) {
       .product-card:hover {
         transform: translateY(-4px);
         box-shadow: var(--shadow-md);
-        border-color: #cbd5e1;
+        border-color: var(--accent);
+      }
+      .product-card:hover .product-name {
+        color: var(--accent);
       }
     }
 
@@ -196,6 +202,7 @@
       color: var(--text-main);
       line-height: 1.4;
       margin-bottom: 0.35rem;
+      transition: color 0.2s ease;
     }
 
     .product-size {
@@ -226,6 +233,18 @@
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--text-main);
+    }
+
+    .search-icon-hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+      transition: opacity 0.2s ease, color 0.2s ease;
+    }
+
+    .product-card:hover .search-icon-hint {
+      opacity: 1;
+      color: var(--accent);
     }
 
     /* Load More Container & Button */
@@ -490,20 +509,26 @@
         return;
       }
 
-      productGrid.innerHTML = productsToDisplay.map(product => `
-        <div class="product-card">
-          <div class="product-details">
-            <h3 class="product-name">${escapeHTML(product.name)}</h3>
-            ${product.size ? `<p class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</p>` : ''}
-          </div>
-          <div class="card-footer">
-            <div class="price-container">
-              <span class="price-label">Price</span>
-              <span class="product-price">$${product.price.toFixed(2)}</span>
+      productGrid.innerHTML = productsToDisplay.map(product => {
+        // Generate Google Search URL for the item
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(product.name)}`;
+
+        return `
+          <a href="${googleSearchUrl}" target="_blank" rel="noopener noreferrer" class="product-card" title="Click to search on Google">
+            <div class="product-details">
+              <h3 class="product-name">${escapeHTML(product.name)}</h3>
+              ${product.size ? `<p class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</p>` : ''}
             </div>
-          </div>
-        </div>
-      `).join('');
+            <div class="card-footer">
+              <div class="price-container">
+                <span class="price-label">Price</span>
+                <span class="product-price">$${product.price.toFixed(2)}</span>
+              </div>
+              <i class="fa-solid fa-arrow-up-right-from-square search-icon-hint"></i>
+            </div>
+          </a>
+        `;
+      }).join('');
 
       // Show or hide Load More button
       if (visibleCount < filteredProducts.length) {
