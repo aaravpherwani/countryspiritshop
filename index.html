@@ -68,29 +68,33 @@
       padding: 0 1.5rem;
     }
 
-    /* Control Panel (Search & Filters) */
+    /* Control Panel (Unified Search & Sort) */
     .controls-card {
       background: var(--card-bg);
       border-radius: var(--radius);
-      padding: 1.5rem;
+      padding: 1.25rem 1.5rem;
       box-shadow: var(--shadow-md);
       border: 1px solid var(--border-color);
       margin-bottom: 2rem;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1rem;
     }
 
-    /* Top Row: Full-Width Search */
+    /* Unified Controls Row */
     .search-row {
-      width: 100%;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .input-wrapper {
       position: relative;
       display: flex;
       align-items: center;
-      width: 100%;
+      flex: 1;
+      min-width: 260px;
     }
 
     .input-wrapper i {
@@ -117,47 +121,41 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
-    /* Filter Row: Dual Sorting Controls */
-    .filter-row {
+    .sort-group {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 1px solid var(--border-color);
-      padding-top: 1rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
       gap: 0.75rem;
+      align-items: center;
       flex-wrap: wrap;
-    }
-
-    .filter-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
     }
 
     .sort-select {
-      padding: 0.5rem 2rem 0.5rem 0.85rem;
-      font-size: 0.875rem;
+      padding: 0.85rem 2.25rem 0.85rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
       border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background-color: #fff;
+      border-radius: 10px;
+      background-color: #f8fafc;
       color: var(--text-main);
       cursor: pointer;
       outline: none;
+      transition: all 0.2s ease;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1.1em;
+    }
+
+    .sort-select:focus, .sort-select:hover {
+      background-color: #fff;
+      border-color: var(--accent);
     }
 
     .results-count {
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       color: var(--text-muted);
       font-weight: 500;
+      margin-left: auto;
     }
 
     /* Product Grid */
@@ -188,17 +186,8 @@
       border-color: #cbd5e1;
     }
 
-    .category-badge {
-      align-self: flex-start;
-      background-color: #eff6ff;
-      color: var(--accent);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.35rem 0.75rem;
-      border-radius: 20px;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
+    .product-details {
+      margin-bottom: 1.25rem;
     }
 
     .product-name {
@@ -206,13 +195,12 @@
       font-weight: 600;
       color: var(--text-main);
       line-height: 1.4;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.35rem;
     }
 
     .product-size {
       font-size: 0.85rem;
       color: var(--text-muted);
-      margin-bottom: 1.25rem;
     }
 
     .card-footer {
@@ -240,6 +228,15 @@
       color: var(--text-main);
     }
 
+    .stock-badge {
+      font-size: 0.75rem;
+      color: #16a34a;
+      background-color: #f0fdf4;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
     /* States & Loading */
     .state-container {
       text-align: center;
@@ -256,9 +253,18 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
-      .filter-row {
+      .search-row {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+      }
+      .input-wrapper, .sort-group {
+        width: 100%;
+      }
+      .sort-select {
+        flex: 1;
+      }
+      .results-count {
+        margin-left: 0;
       }
     }
   </style>
@@ -273,27 +279,21 @@
   <div class="container">
     <!-- Filter & Search Panel -->
     <div class="controls-card">
-      <!-- Search Bar -->
       <div class="search-row">
+        <!-- Search Bar -->
         <div class="input-wrapper">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="searchInput" class="search-input" placeholder="Search products by name or code...">
         </div>
-      </div>
 
-      <!-- Sorting Options -->
-      <div class="filter-row">
-        <div class="filter-group">
-          <span class="filter-label"><i class="fa-solid fa-arrow-down-up-wide"></i> Sort By:</span>
-          
-          <!-- Name Filter -->
+        <!-- Sorting Dropdowns directly on Search Bar row -->
+        <div class="sort-group">
           <select id="sortNameSelect" class="sort-select">
             <option value="default">Name ↑↓</option>
             <option value="asc">Name (A → Z)</option>
             <option value="desc">Name (Z → A)</option>
           </select>
 
-          <!-- Price Filter -->
           <select id="sortPriceSelect" class="sort-select">
             <option value="default">Price ↑↓</option>
             <option value="low-high">Price (Low → High)</option>
@@ -354,19 +354,19 @@
 
     function processCSVData(data) {
       rawProducts = data.map(item => {
-        const name = item['Name'] || item['Item Name'] || 'Unnamed Product';
+        const name = item['Name'] || item['Item Name'] || '';
         const price = parseFloat(item['Unit Price'] || item['Modifiers Price'] || item['Price'] || 0);
-        const category = item['Category Name'] || item['Category Group Name'] || item['Category'] || 'General';
+        const qty = parseFloat(item['Qty On Hand'] || item['Total Qty On Hand'] || 0);
         const size = item['Size'] !== 'MISC' && item['Size'] ? item['Size'] : '';
 
         return {
           name: name.trim(),
           price: isNaN(price) ? 0 : price,
-          category: category.trim(),
+          qty: isNaN(qty) ? 0 : qty,
           size: size.trim(),
           upc: item['UPC Full'] || item['Stock Code'] || ''
         };
-      }).filter(p => p.name !== '');
+      }).filter(p => p.name !== '' && p.qty > 0); // Strictly filter ONLY in-stock items
 
       applyFiltersAndSort();
     }
@@ -403,7 +403,7 @@
         productGrid.innerHTML = `
           <div class="state-container">
             <i class="fa-solid fa-box-open"></i>
-            <p>No products found matching your search criteria.</p>
+            <p>No in-stock products found matching your search criteria.</p>
           </div>
         `;
         return;
@@ -411,14 +411,16 @@
 
       productGrid.innerHTML = products.map(product => `
         <div class="product-card">
-          <span class="category-badge">${escapeHTML(product.category)}</span>
-          <h3 class="product-name">${escapeHTML(product.name)}</h3>
-          ${product.size ? `<p class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</p>` : ''}
+          <div class="product-details">
+            <h3 class="product-name">${escapeHTML(product.name)}</h3>
+            ${product.size ? `<p class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</p>` : ''}
+          </div>
           <div class="card-footer">
             <div class="price-container">
               <span class="price-label">Price</span>
               <span class="product-price">$${product.price.toFixed(2)}</span>
             </div>
+            <span class="stock-badge"><i class="fa-solid fa-check"></i> In Stock</span>
           </div>
         </div>
       `).join('');
