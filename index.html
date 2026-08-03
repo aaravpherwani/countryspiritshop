@@ -69,6 +69,28 @@
       padding: 0 1rem;
     }
 
+    /* Disclaimer Banner */
+    .disclaimer-banner {
+      background-color: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      font-size: 0.825rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .disclaimer-banner i {
+      font-size: 1rem;
+      color: #d97706;
+      flex-shrink: 0;
+    }
+
     /* Control Panel (Unified Search & Sort) */
     .controls-card {
       background: var(--card-bg);
@@ -176,8 +198,8 @@
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       position: relative;
       overflow: hidden;
-      text-decoration: none; /* Removes default link underline */
-      color: inherit;       /* Inherits standard text color */
+      text-decoration: none;
+      color: inherit;
       cursor: pointer;
     }
 
@@ -343,13 +365,19 @@
   </header>
 
   <div class="container">
+    <!-- Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span><strong>Disclaimer:</strong> Information displayed is for informational purposes only and may not reflect real-time pricing or item availability.</span>
+    </div>
+
     <!-- Filter & Search Panel -->
     <div class="controls-card">
       <div class="search-row">
         <!-- Search Bar -->
         <div class="input-wrapper">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search products by name or code...">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name/code...">
         </div>
 
         <!-- Single Sort Dropdown (Default A → Z) -->
