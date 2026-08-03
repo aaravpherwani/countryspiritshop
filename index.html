@@ -333,10 +333,9 @@
           <input type="text" id="searchInput" class="search-input" placeholder="Search products by name or code...">
         </div>
 
-        <!-- Single Sort Dropdown -->
+        <!-- Single Sort Dropdown (Default A → Z) -->
         <select id="sortSelect" class="sort-select">
-          <option value="default">Sort</option>
-          <option value="name-asc">Name (A → Z)</option>
+          <option value="name-asc" selected>Name (A → Z)</option>
           <option value="name-desc">Name (Z → A)</option>
           <option value="price-low">Price (Low → High)</option>
           <option value="price-high">Price (High → Low)</option>
@@ -408,19 +407,40 @@
 
     function processCSVData(data) {
       rawProducts = data.map(item => {
-        const name = item['Name'] || item['Item Name'] || '';
+        const name = (item['Name'] || item['Item Name'] || '').trim();
         const price = parseFloat(item['Unit Price'] || item['Modifiers Price'] || item['Price'] || 0);
         const qty = parseFloat(item['Qty On Hand'] || item['Total Qty On Hand'] || 0);
-        const size = item['Size'] !== 'MISC' && item['Size'] ? item['Size'] : '';
+        const size = item['Size'] !== 'MISC' && item['Size'] ? item['Size'].trim() : '';
 
         return {
-          name: name.trim(),
+          name: name,
           price: isNaN(price) ? 0 : price,
           qty: isNaN(qty) ? 0 : qty,
-          size: size.trim(),
+          size: size,
           upc: item['UPC Full'] || item['Stock Code'] || ''
         };
-      }).filter(p => p.name !== '' && p.qty > 0); // Strictly filter ONLY in-stock items
+      }).filter(p => {
+        // Must have a name and quantity > 0
+        if (!p.name || p.qty <= 0) return false;
+
+        // Exclude $0 price non-items, fees, freight, deposits, and adjustments
+        if (p.price <= 0) return false;
+
+        const lowerName = p.name.toLowerCase();
+        if (
+          lowerName.includes('env fee') ||
+          lowerName.includes('environmental fee') ||
+          lowerName.includes('enviornmental fee') ||
+          lowerName.includes('envoronmental fee') ||
+          lowerName.includes('freight charge') ||
+          lowerName.includes('deposit') ||
+          lowerName.includes('summary level adjustments')
+        ) {
+          return false;
+        }
+
+        return true;
+      });
 
       applyFiltersAndSort();
     }
@@ -438,15 +458,16 @@
                product.upc.toLowerCase().includes(searchTerm);
       });
 
-      // Sorting Logic
-      if (sortOption === 'name-asc') {
-        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-      } else if (sortOption === 'name-desc') {
+      // Sorting Logic (Default: A -> Z)
+      if (sortOption === 'name-desc') {
         filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
       } else if (sortOption === 'price-low') {
         filteredProducts.sort((a, b) => a.price - b.price);
       } else if (sortOption === 'price-high') {
         filteredProducts.sort((a, b) => b.price - a.price);
+      } else {
+        // 'name-asc' is default
+        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
       }
 
       renderGrid();
