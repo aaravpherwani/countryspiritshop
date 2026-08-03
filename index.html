@@ -87,7 +87,7 @@
       color: var(--text-muted);
     }
 
-    /* Control Panel (Unified Search & Sort) */
+    /* Control Panel (Unified Search, Category & Sort) */
     .controls-card {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -112,8 +112,8 @@
       position: relative;
       display: flex;
       align-items: center;
-      flex: 1;
-      min-width: 240px;
+      flex: 2;
+      min-width: 220px;
     }
 
     .input-wrapper i {
@@ -142,7 +142,7 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
-    .sort-select {
+    .select-dropdown {
       height: 48px;
       padding: 0 2.25rem 0 1rem;
       font-size: 0.9rem;
@@ -159,10 +159,11 @@
       background-repeat: no-repeat;
       background-position: right 0.75rem center;
       background-size: 1.1em;
-      min-width: 160px;
+      flex: 1;
+      min-width: 150px;
     }
 
-    .sort-select:focus, .sort-select:hover {
+    .select-dropdown:focus, .select-dropdown:hover {
       background-color: #fff;
       border-color: var(--accent);
     }
@@ -172,6 +173,7 @@
       color: var(--text-muted);
       font-weight: 500;
       margin-left: auto;
+      white-space: nowrap;
     }
 
     /* Product Grid */
@@ -221,6 +223,22 @@
       line-height: 1.4;
       margin-bottom: 0.35rem;
       transition: color 0.2s ease;
+    }
+
+    .product-meta {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .product-badge {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background-color: #f1f5f9;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 500;
     }
 
     .product-size {
@@ -326,7 +344,7 @@
         flex-direction: column;
         align-items: stretch;
       }
-      .input-wrapper, .sort-select {
+      .input-wrapper, .select-dropdown {
         width: 100%;
       }
       .results-count {
@@ -376,8 +394,13 @@
           <input type="text" id="searchInput" class="search-input" placeholder="Search by name/code...">
         </div>
 
-        <!-- Single Sort Dropdown (Default A → Z) -->
-        <select id="sortSelect" class="sort-select">
+        <!-- Category Dropdown -->
+        <select id="categorySelect" class="select-dropdown">
+          <option value="all" selected>All Categories</option>
+        </select>
+
+        <!-- Sort Dropdown -->
+        <select id="sortSelect" class="select-dropdown">
           <option value="name-asc" selected>Name (A → Z)</option>
           <option value="name-desc">Name (Z → A)</option>
           <option value="price-low">Price (Low → High)</option>
@@ -416,10 +439,37 @@
     // DOM Elements
     const productGrid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
+    const categorySelect = document.getElementById('categorySelect');
     const sortSelect = document.getElementById('sortSelect');
     const resultsCount = document.getElementById('resultsCount');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    // Categorization Logic Helper
+    function getCategory(name) {
+      const lower = name.toLowerCase();
+
+      if (lower.includes('beer') || lower.includes('ipa') || lower.includes('ale') || lower.includes('lager') || lower.includes('stout') || lower.includes('pilsner') || lower.includes('cider') || lower.includes('seltzer') || lower.includes('4pk') || lower.includes('6pk') || lower.includes('12pk')) {
+        return 'Beer & Seltzers';
+      }
+      if (lower.includes('wine') || lower.includes('cabernet') || lower.includes('chardonnay') || lower.includes('pinot') || lower.includes('sauvignon') || lower.includes('merlot') || lower.includes('prosecco') || lower.includes('champagne') || lower.includes('rosé') || lower.includes('rose') || lower.includes('riesling')) {
+        return 'Wine';
+      }
+      if (lower.includes('vodka') || lower.includes('whiskey') || lower.includes('bourbon') || lower.includes('tequila') || lower.includes('rum') || lower.includes('gin') || lower.includes('liqueur') || lower.includes('cognac') || lower.includes('brandy') || lower.includes('scotch') || lower.includes('bitter')) {
+        return 'Spirits';
+      }
+      if (lower.includes('cigar') || lower.includes('tobacco') || lower.includes('cigarette') || lower.includes('vape') || lower.includes('zYN') || lower.includes('wrap')) {
+        return 'Cigars & Tobacco';
+      }
+      if (lower.includes('soda') || lower.includes('tonic') || lower.includes('water') || lower.includes('juice') || lower.includes('drink') || lower.includes('ice') || lower.includes('red bull') || lower.includes('monster')) {
+        return 'Beverages & Mixers';
+      }
+      if (lower.includes('chip') || lower.includes('snack') || lower.includes('candy') || lower.includes('gum') || lower.includes('nuts') || lower.includes('chocolate')) {
+        return 'Snacks & Food';
+      }
+
+      return 'Other / Misc';
+    }
 
     // Fetch and parse CSV
     document.addEventListener('DOMContentLoaded', () => {
@@ -460,13 +510,11 @@
           price: isNaN(price) ? 0 : price,
           qty: isNaN(qty) ? 0 : qty,
           size: size,
-          upc: item['UPC Full'] || item['Stock Code'] || ''
+          upc: item['UPC Full'] || item['Stock Code'] || '',
+          category: getCategory(name)
         };
       }).filter(p => {
-        // Must have a name and quantity > 0
         if (!p.name || p.qty <= 0) return false;
-
-        // Exclude $0 price non-items, fees, freight, deposits, and adjustments
         if (p.price <= 0) return false;
 
         const lowerName = p.name.toLowerCase();
@@ -485,23 +533,39 @@
         return true;
       });
 
+      populateCategoryDropdown();
       applyFiltersAndSort();
+    }
+
+    function populateCategoryDropdown() {
+      const categories = Array.from(new Set(rawProducts.map(p => p.category))).sort();
+      categorySelect.innerHTML = '<option value="all" selected>All Categories</option>';
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        categorySelect.appendChild(opt);
+      });
     }
 
     function applyFiltersAndSort() {
       const searchTerm = searchInput.value.toLowerCase().trim();
+      const selectedCat = categorySelect.value;
       const sortOption = sortSelect.value;
 
       // Reset Pagination
       currentPage = 1;
 
-      // Search Filtering
+      // Search & Category Filtering
       filteredProducts = rawProducts.filter(product => {
-        return product.name.toLowerCase().includes(searchTerm) || 
-               product.upc.toLowerCase().includes(searchTerm);
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
+                              product.upc.toLowerCase().includes(searchTerm);
+        const matchesCategory = selectedCat === 'all' || product.category === selectedCat;
+
+        return matchesSearch && matchesCategory;
       });
 
-      // Sorting Logic (Default: A -> Z)
+      // Sorting Logic
       if (sortOption === 'name-desc') {
         filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
       } else if (sortOption === 'price-low') {
@@ -509,7 +573,6 @@
       } else if (sortOption === 'price-high') {
         filteredProducts.sort((a, b) => b.price - a.price);
       } else {
-        // 'name-asc' is default
         filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
       }
 
@@ -526,7 +589,7 @@
         productGrid.innerHTML = `
           <div class="state-container">
             <i class="fa-solid fa-box-open"></i>
-            <p>No in-stock products found matching your search criteria.</p>
+            <p>No in-stock products found matching your criteria.</p>
           </div>
         `;
         loadMoreContainer.style.display = 'none';
@@ -534,14 +597,16 @@
       }
 
       productGrid.innerHTML = productsToDisplay.map(product => {
-        // Generate Google Search URL for the item
         const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(product.name)}`;
 
         return `
           <a href="${googleSearchUrl}" target="_blank" rel="noopener noreferrer" class="product-card" title="Click to search on Google">
             <div class="product-details">
               <h3 class="product-name">${escapeHTML(product.name)}</h3>
-              ${product.size ? `<p class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</p>` : ''}
+              <div class="product-meta">
+                <span class="product-badge">${escapeHTML(product.category)}</span>
+                ${product.size ? `<span class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</span>` : ''}
+              </div>
             </div>
             <div class="card-footer">
               <div class="price-container">
@@ -554,7 +619,6 @@
         `;
       }).join('');
 
-      // Show or hide Load More button
       if (visibleCount < filteredProducts.length) {
         loadMoreContainer.style.display = 'block';
       } else {
@@ -585,6 +649,7 @@
 
     // Event Listeners
     searchInput.addEventListener('input', applyFiltersAndSort);
+    categorySelect.addEventListener('change', applyFiltersAndSort);
     sortSelect.addEventListener('change', applyFiltersAndSort);
     loadMoreBtn.addEventListener('click', loadMore);
   </script>
