@@ -7,7 +7,7 @@
   <!-- Google Fonts & Font Awesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- PapaParse for high-performance CSV processing -->
@@ -19,8 +19,8 @@
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
+      --accent: #1e40af;
+      --accent-hover: #1e3a8a;
       --border-color: #e2e8f0;
       --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
       --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
@@ -31,7 +31,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Open Sans', sans-serif;
     }
 
     body {
@@ -42,24 +42,27 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Header & Hero */
+    /* Header & Hero - Dark Royal Blue */
     header {
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
       color: #fff;
       padding: 2.5rem 1.25rem 2.25rem;
       text-align: center;
     }
 
     header h1 {
-      font-size: 2.25rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
     }
 
     header p {
-      color: #94a3b8;
+      font-family: 'Open Sans', sans-serif;
+      color: #cbd5e1;
       font-size: 1rem;
+      font-weight: 300;
       margin-bottom: 1.25rem;
     }
 
@@ -82,7 +85,7 @@
       border-radius: 5px;
       height: 36px;
       width: 170px;
-      font-family: Arial, sans-serif;
+      font-family: 'Open Sans', sans-serif;
       font-size: 0.85rem;
       font-weight: 300;
       letter-spacing: 0.05em;
@@ -177,7 +180,7 @@
     .search-input:focus {
       background-color: #fff;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
     }
 
     .select-dropdown {
@@ -364,7 +367,7 @@
         padding: 2rem 1rem 1.5rem;
       }
       header h1 {
-        font-size: 1.75rem;
+        font-size: 2rem;
       }
       .header-buttons {
         gap: 0.65rem;
