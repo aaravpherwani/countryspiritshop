@@ -68,7 +68,7 @@
       padding: 0 1.5rem;
     }
 
-    /* Control Panel (Search, Category, Filters) */
+    /* Control Panel (Search & Filters) */
     .controls-card {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -81,17 +81,16 @@
       gap: 1.25rem;
     }
 
-    /* Top Row: Search & Category */
+    /* Top Row: Full-Width Search */
     .search-row {
-      display: grid;
-      grid-template-columns: 1fr 240px;
-      gap: 1rem;
+      width: 100%;
     }
 
     .input-wrapper {
       position: relative;
       display: flex;
       align-items: center;
+      width: 100%;
     }
 
     .input-wrapper i {
@@ -100,7 +99,7 @@
       color: var(--text-muted);
     }
 
-    .search-input, .select-input {
+    .search-input {
       width: 100%;
       padding: 0.85rem 1rem 0.85rem 2.75rem;
       font-size: 0.95rem;
@@ -112,23 +111,13 @@
       transition: all 0.2s ease;
     }
 
-    .select-input {
-      padding-left: 1rem;
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 1rem center;
-      background-size: 1.2em;
-    }
-
-    .search-input:focus, .select-input:focus {
+    .search-input:focus {
       background-color: #fff;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
-    /* Filter Row: Sorting controls */
+    /* Filter Row: Dual Sorting Controls */
     .filter-row {
       display: flex;
       align-items: center;
@@ -267,9 +256,6 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
-      .search-row {
-        grid-template-columns: 1fr;
-      }
       .filter-row {
         flex-direction: column;
         align-items: flex-start;
@@ -287,16 +273,11 @@
   <div class="container">
     <!-- Filter & Search Panel -->
     <div class="controls-card">
-      <!-- Search Bar & Category Dropdown -->
+      <!-- Search Bar -->
       <div class="search-row">
         <div class="input-wrapper">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="searchInput" class="search-input" placeholder="Search products by name or code...">
-        </div>
-        <div>
-          <select id="categorySelect" class="select-input">
-            <option value="ALL">All Categories</option>
-          </select>
         </div>
       </div>
 
@@ -307,14 +288,14 @@
           
           <!-- Name Filter -->
           <select id="sortNameSelect" class="sort-select">
-            <option value="default">Name (Default)</option>
+            <option value="default">Name ↑↓</option>
             <option value="asc">Name (A → Z)</option>
             <option value="desc">Name (Z → A)</option>
           </select>
 
           <!-- Price Filter -->
           <select id="sortPriceSelect" class="sort-select">
-            <option value="default">Price (Default)</option>
+            <option value="default">Price ↑↓</option>
             <option value="low-high">Price (Low → High)</option>
             <option value="high-low">Price (High → Low)</option>
           </select>
@@ -340,15 +321,13 @@
     // DOM Elements
     const productGrid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
-    const categorySelect = document.getElementById('categorySelect');
     const sortNameSelect = document.getElementById('sortNameSelect');
     const sortPriceSelect = document.getElementById('sortPriceSelect');
     const resultsCount = document.getElementById('resultsCount');
 
     // Fetch and parse CSV
     document.addEventListener('DOMContentLoaded', () => {
-      // Auto-detect items.csv or fall back to local test
-      const csvFilePath = 'items-7_30_2622_08_49.csv'; // or 'items.csv'
+      const csvFilePath = 'items-7_30_2622_08_49.csv';
 
       Papa.parse(csvFilePath, {
         download: true,
@@ -358,7 +337,6 @@
           processCSVData(results.data);
         },
         error: function(err) {
-          // Fallback check for standard 'items.csv' filename
           Papa.parse('items.csv', {
             download: true,
             header: true,
@@ -376,7 +354,6 @@
 
     function processCSVData(data) {
       rawProducts = data.map(item => {
-        // Safe mapping with fallbacks
         const name = item['Name'] || item['Item Name'] || 'Unnamed Product';
         const price = parseFloat(item['Unit Price'] || item['Modifiers Price'] || item['Price'] || 0);
         const category = item['Category Name'] || item['Category Group Name'] || item['Category'] || 'General';
@@ -391,39 +368,21 @@
         };
       }).filter(p => p.name !== '');
 
-      populateCategories(rawProducts);
       applyFiltersAndSort();
-    }
-
-    function populateCategories(products) {
-      const categories = [...new Set(products.map(p => p.category))].sort();
-      categorySelect.innerHTML = '<option value="ALL">All Categories</option>';
-      categories.forEach(cat => {
-        if(cat) {
-          const option = document.createElement('option');
-          option.value = cat;
-          option.textContent = cat;
-          categorySelect.appendChild(option);
-        }
-      });
     }
 
     function applyFiltersAndSort() {
       const searchTerm = searchInput.value.toLowerCase().trim();
-      const selectedCategory = categorySelect.value;
       const sortName = sortNameSelect.value;
       const sortPrice = sortPriceSelect.value;
 
-      // Filter
+      // Search Filtering
       filteredProducts = rawProducts.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
-                              product.upc.toLowerCase().includes(searchTerm);
-        const matchesCategory = (selectedCategory === 'ALL') || (product.category === selectedCategory);
-        
-        return matchesSearch && matchesCategory;
+        return product.name.toLowerCase().includes(searchTerm) || 
+               product.upc.toLowerCase().includes(searchTerm);
       });
 
-      // Sort Priority (Price sort takes precedence if changed from default, otherwise Name)
+      // Sorting Logic
       if (sortPrice !== 'default') {
         filteredProducts.sort((a, b) => sortPrice === 'low-high' ? a.price - b.price : b.price - a.price);
       } else if (sortName !== 'default') {
@@ -482,7 +441,6 @@
 
     // Event Listeners
     searchInput.addEventListener('input', applyFiltersAndSort);
-    categorySelect.addEventListener('change', applyFiltersAndSort);
     
     sortNameSelect.addEventListener('change', (e) => {
       if (e.target.value !== 'default') sortPriceSelect.value = 'default';
