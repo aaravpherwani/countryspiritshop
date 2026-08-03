@@ -46,7 +46,7 @@
     header {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       color: #fff;
-      padding: 2.5rem 1.25rem 2rem; /* Reduced bottom padding so spacing flows cleanly */
+      padding: 2.5rem 1.25rem 2.25rem;
       text-align: center;
     }
 
@@ -60,12 +60,48 @@
     header p {
       color: #94a3b8;
       font-size: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Action Buttons Row */
+    .header-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f5efe6;
+      color: #0056b3;
+      border: 1px solid #1c1917;
+      border-radius: 8px;
+      padding: 0.65rem 1.75rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      min-width: 140px;
+    }
+
+    .action-btn:hover {
+      background-color: #eae1d5;
+      transform: translateY(-1px);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
     }
 
     /* Main Container */
     .container {
       max-width: 1200px;
-      margin: 0 auto; /* Removed negative top margin so disclaimer renders cleanly on page background */
+      margin: 0 auto;
       padding: 1.25rem 1rem 0;
     }
 
@@ -327,6 +363,15 @@
       header h1 {
         font-size: 1.75rem;
       }
+      .header-buttons {
+        gap: 0.65rem;
+      }
+      .action-btn {
+        flex: 1;
+        min-width: 0;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.875rem;
+      }
       .container {
         padding: 0.75rem 0.85rem 0;
       }
@@ -346,7 +391,7 @@
       .select-dropdown {
         width: 100%;
         min-width: 0;
-        height: 48px; /* Matches full height of search input */
+        height: 48px;
       }
       .results-count {
         margin-left: 0;
@@ -378,6 +423,14 @@
   <header>
     <h1>Product Catalog</h1>
     <p>Explore our wide selection of items</p>
+    
+    <!-- Call Us and Visit Today Buttons -->
+    <div class="header-buttons">
+      <!-- Replace tel: with your store phone number -->
+      <a href="tel:1234567890" class="action-btn">CALL US</a>
+      <!-- Replace href with your Google Maps location URL -->
+      <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" class="action-btn">VISIT TODAY</a>
+    </div>
   </header>
 
   <div class="container">
