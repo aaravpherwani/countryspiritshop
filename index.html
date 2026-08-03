@@ -454,15 +454,14 @@
     const loadMoreBtn = document.getElementById('loadMoreBtn');
 
     /**
-     * Enhanced Categorization Matching Algorithm
+     * Categorization Matching Logic
      */
     function getCategory(name) {
       const n = name.toUpperCase();
 
       // 1. READY TO DRINK (Pre-mixed cocktails, RTD cans, hard teas, hard seltzers, canned cocktails)
       if (
-        n.includes('HIGH NOON') || n.includes('CUTWATER') || n.includes('NUTR
-L') || n.includes('NUTRL') || 
+        n.includes('HIGH NOON') || n.includes('CUTWATER') || n.includes('NUTRL') || 
         n.includes('ON THE ROCKS') || n.includes('TWISTED TEA') || n.includes('SURFSIDE') || 
         n.includes('HAPPY THURSDAY') || n.includes('MONACO') || n.includes('BUZZBALLZ') || 
         n.includes('CLUBTAILS') || n.includes('BEATBOX') || n.includes('HARD SELTZER') || 
@@ -476,8 +475,7 @@ L') || n.includes('NUTRL') ||
       if (
         n.includes('CIGAR') || n.includes('TOBACCO') || n.includes('CIGARETTE') || 
         n.includes('ZYN') || n.includes('VELO') || n.includes('ROGUE') || n.includes('ON!') ||
-        n.includes('VAPE') || n.includes('JUUL') || n.includes('PUFF') || n.includes('DJO
-U') ||
+        n.includes('VAPE') || n.includes('JUUL') || n.includes('PUFF') || n.includes('DJARUM') ||
         n.includes('MARLBORO') || n.includes('NEWPORT') || n.includes('CAMEL') || n.includes('SWISHER') ||
         n.includes('DUTCH') || n.includes('BACKWOODS') || n.includes('GAME') || n.includes('WRAP')
       ) {
@@ -492,20 +490,18 @@ U') ||
         return 'Cannabis & Hemp';
       }
 
-      // 4. SPIRITS (Vodka, Tequila, Whiskey, Bourbon, Rum, Gin, Cognac, Liqueurs, Shots, Brand Names)
+      // 4. SPIRITS (Vodka, Tequila, Whiskey, Bourbon, Rum, Gin, Cognac, Liqueurs, Brand Names)
       if (
-        // Specific Types
         n.includes('TEQUILA') || n.includes('VODKA') || n.includes('WHISKEY') || n.includes('WHISKY') || 
         n.includes('BOURBON') || n.includes('RUM') || n.includes('GIN') || n.includes('COGNAC') || 
         n.includes('BRANDY') || n.includes('SCOTCH') || n.includes('LIQUEUR') || n.includes('MEZCAL') || 
         n.includes('SCHNAPPS') || n.includes('BITTERS') || n.includes('TRIPLE SEC') || n.includes('MOONSHINE') ||
-        // Popular Spirits Brands & Specific items (e.g. 1800 Coconut)
         n.includes('1800') || n.includes('CASAMIGOS') || n.includes('PATRON') || n.includes('DON JULIO') || 
         n.includes('TITO') || n.includes('GREY GOOSE') || n.includes('HENNESSY') || n.includes('JACK DANIEL') || 
         n.includes('JIM BEAM') || n.includes('JAGERMEISTER') || n.includes('FIREBALL') || n.includes('CROWN ROYAL') || 
         n.includes('BACARDI') || n.includes('CAPTAIN MORGAN') || n.includes('JAMESON') || n.includes('MAKERS MARK') ||
         n.includes('JOSE CUERVO') || n.includes('TEREMANA') || n.includes('HERRADURA') || n.includes('ESPOLON') ||
-        n.includes('REPOSADO') || n.includes('BLANCO') || n.includes('AÑEJO') || n.includes('ANEJO')
+        n.includes('REPOSADO') || n.includes('BLANCO') || n.includes('ANEJO')
       ) {
         return 'Spirits';
       }
@@ -534,7 +530,7 @@ U') ||
         return 'Beer & Malt';
       }
 
-      // 7. BEVERAGES & MIXERS (Soda, Water, Juice, Energy Drinks, Ice, Mixers)
+      // 7. BEVERAGES & MIXERS (Soda, Water, Juice, Energy Drinks, Mixers)
       if (
         n.includes('SODA') || n.includes('TONIC') || n.includes('WATER') || n.includes('JUICE') || 
         n.includes('RED BULL') || n.includes('MONSTER') || n.includes('GATORADE') || n.includes('COCA COLA') || 
@@ -568,7 +564,7 @@ U') ||
               processCSVData(results.data);
             },
             error: function() {
-              renderError('Failed to load CSV file. Please ensure the inventory CSV exists in your repository root.');
+              renderError('Failed to load CSV file. Please ensure items-7_30_2622_08_49.csv or items.csv exists in your repository root.');
             }
           });
         }
