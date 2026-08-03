@@ -112,8 +112,8 @@
       position: relative;
       display: flex;
       align-items: center;
-      flex: 2;
-      min-width: 220px;
+      flex: 3;
+      min-width: 240px;
     }
 
     .input-wrapper i {
@@ -160,7 +160,7 @@
       background-position: right 0.75rem center;
       background-size: 1.1em;
       flex: 1;
-      min-width: 170px;
+      min-width: 180px;
     }
 
     .select-dropdown:focus, .select-dropdown:hover {
@@ -230,15 +230,6 @@
       gap: 0.5rem;
       align-items: center;
       flex-wrap: wrap;
-    }
-
-    .product-badge {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      background-color: #f1f5f9;
-      padding: 0.15rem 0.5rem;
-      border-radius: 6px;
-      font-weight: 500;
     }
 
     .product-size {
@@ -394,19 +385,6 @@
           <input type="text" id="searchInput" class="search-input" placeholder="Search by name/code...">
         </div>
 
-        <!-- Category Dropdown -->
-        <select id="categorySelect" class="select-dropdown">
-          <option value="all" selected>All Categories</option>
-          <option value="Wine">Wine</option>
-          <option value="Spirits">Spirits</option>
-          <option value="Beer & Malt">Beer & Malt</option>
-          <option value="Ready to Drink">Ready to Drink</option>
-          <option value="Beverages & Mixers">Beverages & Mixers</option>
-          <option value="Tobacco">Tobacco</option>
-          <option value="Cannabis & Hemp">Cannabis & Hemp</option>
-          <option value="Other">Other</option>
-        </select>
-
         <!-- Sort Dropdown -->
         <select id="sortSelect" class="select-dropdown">
           <option value="name-asc" selected>Name (A → Z)</option>
@@ -447,102 +425,10 @@
     // DOM Elements
     const productGrid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
-    const categorySelect = document.getElementById('categorySelect');
     const sortSelect = document.getElementById('sortSelect');
     const resultsCount = document.getElementById('resultsCount');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
-
-    /**
-     * Categorization Matching Logic
-     */
-    function getCategory(name) {
-      const n = name.toUpperCase();
-
-      // 1. READY TO DRINK (Pre-mixed cocktails, RTD cans, hard teas, hard seltzers, canned cocktails)
-      if (
-        n.includes('HIGH NOON') || n.includes('CUTWATER') || n.includes('NUTRL') || 
-        n.includes('ON THE ROCKS') || n.includes('TWISTED TEA') || n.includes('SURFSIDE') || 
-        n.includes('HAPPY THURSDAY') || n.includes('MONACO') || n.includes('BUZZBALLZ') || 
-        n.includes('CLUBTAILS') || n.includes('BEATBOX') || n.includes('HARD SELTZER') || 
-        n.includes('HARD TEA') || n.includes('HARD LEMONADE') || n.includes('COCKTAIL CAN') ||
-        n.includes('RTD') || n.includes('READY TO DRINK') || n.includes('MARGARITA CAN')
-      ) {
-        return 'Ready to Drink';
-      }
-
-      // 2. TOBACCO (Cigars, Cigarettes, Chew, Nicotine Pouches, Vapes)
-      if (
-        n.includes('CIGAR') || n.includes('TOBACCO') || n.includes('CIGARETTE') || 
-        n.includes('ZYN') || n.includes('VELO') || n.includes('ROGUE') || n.includes('ON!') ||
-        n.includes('VAPE') || n.includes('JUUL') || n.includes('PUFF') || n.includes('DJARUM') ||
-        n.includes('MARLBORO') || n.includes('NEWPORT') || n.includes('CAMEL') || n.includes('SWISHER') ||
-        n.includes('DUTCH') || n.includes('BACKWOODS') || n.includes('GAME') || n.includes('WRAP')
-      ) {
-        return 'Tobacco';
-      }
-
-      // 3. CANNABIS & HEMP (CBD, Delta 9, Hemp drinks & edibles)
-      if (
-        n.includes('CBD') || n.includes('HEMP') || n.includes('DELTA 8') || n.includes('DELTA 9') || 
-        n.includes('DELTA-8') || n.includes('DELTA-9') || n.includes('THC') || n.includes('CANNABIS')
-      ) {
-        return 'Cannabis & Hemp';
-      }
-
-      // 4. SPIRITS (Vodka, Tequila, Whiskey, Bourbon, Rum, Gin, Cognac, Liqueurs, Brand Names)
-      if (
-        n.includes('TEQUILA') || n.includes('VODKA') || n.includes('WHISKEY') || n.includes('WHISKY') || 
-        n.includes('BOURBON') || n.includes('RUM') || n.includes('GIN') || n.includes('COGNAC') || 
-        n.includes('BRANDY') || n.includes('SCOTCH') || n.includes('LIQUEUR') || n.includes('MEZCAL') || 
-        n.includes('SCHNAPPS') || n.includes('BITTERS') || n.includes('TRIPLE SEC') || n.includes('MOONSHINE') ||
-        n.includes('1800') || n.includes('CASAMIGOS') || n.includes('PATRON') || n.includes('DON JULIO') || 
-        n.includes('TITO') || n.includes('GREY GOOSE') || n.includes('HENNESSY') || n.includes('JACK DANIEL') || 
-        n.includes('JIM BEAM') || n.includes('JAGERMEISTER') || n.includes('FIREBALL') || n.includes('CROWN ROYAL') || 
-        n.includes('BACARDI') || n.includes('CAPTAIN MORGAN') || n.includes('JAMESON') || n.includes('MAKERS MARK') ||
-        n.includes('JOSE CUERVO') || n.includes('TEREMANA') || n.includes('HERRADURA') || n.includes('ESPOLON') ||
-        n.includes('REPOSADO') || n.includes('BLANCO') || n.includes('ANEJO')
-      ) {
-        return 'Spirits';
-      }
-
-      // 5. WINE (Red, White, Sparkling, Rosé, Champagne, Port, Brands)
-      if (
-        n.includes('WINE') || n.includes('CABERNET') || n.includes('CHARDONNAY') || n.includes('PINOT') || 
-        n.includes('SAUVIGNON') || n.includes('MERLOT') || n.includes('PROSECCO') || n.includes('CHAMPAGNE') || 
-        n.includes('ROSÉ') || n.includes('ROSE') || n.includes('RIESLING') || n.includes('MOSCATO') || 
-        n.includes('MALBEC') || n.includes('ZINFANDEL') || n.includes('PORT') || n.includes('SHIRAZ') ||
-        n.includes('SANGRIA') || n.includes('VERMOUTH') || n.includes('CHIANTI') || n.includes('BORDEAUX') ||
-        n.includes('CAVIT') || n.includes('BAREFOOT') || n.includes('WOODBRIDGE') || n.includes('SUTTER HOME')
-      ) {
-        return 'Wine';
-      }
-
-      // 6. BEER & MALT (Lagers, Ales, IPAs, Stouts, Malt Beverages, Pack Sizes)
-      if (
-        n.includes('BEER') || n.includes('IPA') || n.includes('ALE') || n.includes('LAGER') || 
-        n.includes('STOUT') || n.includes('PILSNER') || n.includes('CIDER') || n.includes('PORTER') ||
-        n.includes('HEFEWEIZEN') || n.includes('MALT') || n.includes('CORONA') || n.includes('MODELO') || 
-        n.includes('BUD LIGHT') || n.includes('BUDWEISER') || n.includes('COORS') || n.includes('MILLER') || 
-        n.includes('HEINEKEN') || n.includes('MICHELOB') || n.includes('STELLA ARTOIS') || n.includes('GUINNESS') ||
-        n.includes('4PK') || n.includes('6PK') || n.includes('12PK') || n.includes('18PK') || n.includes('24PK') || n.includes('30PK')
-      ) {
-        return 'Beer & Malt';
-      }
-
-      // 7. BEVERAGES & MIXERS (Soda, Water, Juice, Energy Drinks, Mixers)
-      if (
-        n.includes('SODA') || n.includes('TONIC') || n.includes('WATER') || n.includes('JUICE') || 
-        n.includes('RED BULL') || n.includes('MONSTER') || n.includes('GATORADE') || n.includes('COCA COLA') || 
-        n.includes('COKE') || n.includes('PEPSI') || n.includes('SPRITE') || n.includes('CLUB SODA') || 
-        n.includes('GINGER ALE') || n.includes('MARGARITA MIX') || n.includes('BLOODY MARY') || n.includes('SYRUP')
-      ) {
-        return 'Beverages & Mixers';
-      }
-
-      // 8. OTHER (Ice, Chips, Snacks, Misc non-beverage items)
-      return 'Other';
-    }
 
     // Fetch and parse CSV
     document.addEventListener('DOMContentLoaded', () => {
@@ -583,8 +469,7 @@
           price: isNaN(price) ? 0 : price,
           qty: isNaN(qty) ? 0 : qty,
           size: size,
-          upc: item['UPC Full'] || item['Stock Code'] || '',
-          category: getCategory(name)
+          upc: item['UPC Full'] || item['Stock Code'] || ''
         };
       }).filter(p => {
         if (!p.name || p.qty <= 0) return false;
@@ -611,19 +496,15 @@
 
     function applyFiltersAndSort() {
       const searchTerm = searchInput.value.toLowerCase().trim();
-      const selectedCat = categorySelect.value;
       const sortOption = sortSelect.value;
 
       // Reset Pagination
       currentPage = 1;
 
-      // Search & Category Filtering
+      // Search Filtering
       filteredProducts = rawProducts.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
-                              product.upc.toLowerCase().includes(searchTerm);
-        const matchesCategory = selectedCat === 'all' || product.category === selectedCat;
-
-        return matchesSearch && matchesCategory;
+        return product.name.toLowerCase().includes(searchTerm) || 
+               product.upc.toLowerCase().includes(searchTerm);
       });
 
       // Sorting Logic
@@ -665,7 +546,6 @@
             <div class="product-details">
               <h3 class="product-name">${escapeHTML(product.name)}</h3>
               <div class="product-meta">
-                <span class="product-badge">${escapeHTML(product.category)}</span>
                 ${product.size ? `<span class="product-size"><i class="fa-solid fa-tag"></i> ${escapeHTML(product.size)}</span>` : ''}
               </div>
             </div>
@@ -710,7 +590,6 @@
 
     // Event Listeners
     searchInput.addEventListener('input', applyFiltersAndSort);
-    categorySelect.addEventListener('change', applyFiltersAndSort);
     sortSelect.addEventListener('change', applyFiltersAndSort);
     loadMoreBtn.addEventListener('click', loadMore);
   </script>
