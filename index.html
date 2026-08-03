@@ -121,13 +121,6 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
-    .sort-group {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
     .sort-select {
       padding: 0.85rem 2.25rem 0.85rem 1rem;
       font-size: 0.9rem;
@@ -144,6 +137,7 @@
       background-repeat: no-repeat;
       background-position: right 0.75rem center;
       background-size: 1.1em;
+      min-width: 180px;
     }
 
     .sort-select:focus, .sort-select:hover {
@@ -228,15 +222,6 @@
       color: var(--text-main);
     }
 
-    .stock-badge {
-      font-size: 0.75rem;
-      color: #16a34a;
-      background-color: #f0fdf4;
-      padding: 0.25rem 0.6rem;
-      border-radius: 12px;
-      font-weight: 600;
-    }
-
     /* States & Loading */
     .state-container {
       text-align: center;
@@ -257,11 +242,11 @@
         flex-direction: column;
         align-items: stretch;
       }
-      .input-wrapper, .sort-group {
+      .input-wrapper {
         width: 100%;
       }
       .sort-select {
-        flex: 1;
+        width: 100%;
       }
       .results-count {
         margin-left: 0;
@@ -286,20 +271,14 @@
           <input type="text" id="searchInput" class="search-input" placeholder="Search products by name or code...">
         </div>
 
-        <!-- Sorting Dropdowns directly on Search Bar row -->
-        <div class="sort-group">
-          <select id="sortNameSelect" class="sort-select">
-            <option value="default">Name ↑↓</option>
-            <option value="asc">Name (A → Z)</option>
-            <option value="desc">Name (Z → A)</option>
-          </select>
-
-          <select id="sortPriceSelect" class="sort-select">
-            <option value="default">Price ↑↓</option>
-            <option value="low-high">Price (Low → High)</option>
-            <option value="high-low">Price (High → Low)</option>
-          </select>
-        </div>
+        <!-- Single Sort Dropdown -->
+        <select id="sortSelect" class="sort-select">
+          <option value="default">Sort</option>
+          <option value="name-asc">Name (A → Z)</option>
+          <option value="name-desc">Name (Z → A)</option>
+          <option value="price-low">Price (Low → High)</option>
+          <option value="price-high">Price (High → Low)</option>
+        </select>
 
         <div id="resultsCount" class="results-count">Showing 0 products</div>
       </div>
@@ -321,8 +300,7 @@
     // DOM Elements
     const productGrid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
-    const sortNameSelect = document.getElementById('sortNameSelect');
-    const sortPriceSelect = document.getElementById('sortPriceSelect');
+    const sortSelect = document.getElementById('sortSelect');
     const resultsCount = document.getElementById('resultsCount');
 
     // Fetch and parse CSV
@@ -373,8 +351,7 @@
 
     function applyFiltersAndSort() {
       const searchTerm = searchInput.value.toLowerCase().trim();
-      const sortName = sortNameSelect.value;
-      const sortPrice = sortPriceSelect.value;
+      const sortOption = sortSelect.value;
 
       // Search Filtering
       filteredProducts = rawProducts.filter(product => {
@@ -383,14 +360,14 @@
       });
 
       // Sorting Logic
-      if (sortPrice !== 'default') {
-        filteredProducts.sort((a, b) => sortPrice === 'low-high' ? a.price - b.price : b.price - a.price);
-      } else if (sortName !== 'default') {
-        filteredProducts.sort((a, b) => {
-          return sortName === 'asc' 
-            ? a.name.localeCompare(b.name) 
-            : b.name.localeCompare(a.name);
-        });
+      if (sortOption === 'name-asc') {
+        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortOption === 'name-desc') {
+        filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sortOption === 'price-low') {
+        filteredProducts.sort((a, b) => a.price - b.price);
+      } else if (sortOption === 'price-high') {
+        filteredProducts.sort((a, b) => b.price - a.price);
       }
 
       renderProducts(filteredProducts);
@@ -420,7 +397,6 @@
               <span class="price-label">Price</span>
               <span class="product-price">$${product.price.toFixed(2)}</span>
             </div>
-            <span class="stock-badge"><i class="fa-solid fa-check"></i> In Stock</span>
           </div>
         </div>
       `).join('');
@@ -437,22 +413,13 @@
 
     function escapeHTML(str) {
       return str.replace(/[&<>'"]/g, 
-        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        tag => ({ '&': '&amp;', '<': '&lt;'>, "'": '&#39;', '"': '&quot;' }[tag] || tag)
       );
     }
 
     // Event Listeners
     searchInput.addEventListener('input', applyFiltersAndSort);
-    
-    sortNameSelect.addEventListener('change', (e) => {
-      if (e.target.value !== 'default') sortPriceSelect.value = 'default';
-      applyFiltersAndSort();
-    });
-
-    sortPriceSelect.addEventListener('change', (e) => {
-      if (e.target.value !== 'default') sortNameSelect.value = 'default';
-      applyFiltersAndSort();
-    });
+    sortSelect.addEventListener('change', applyFiltersAndSort);
   </script>
 </body>
 </html>
