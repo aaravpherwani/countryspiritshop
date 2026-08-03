@@ -87,7 +87,7 @@
       color: var(--text-muted);
     }
 
-    /* Control Panel (Unified Search, Category & Sort) */
+    /* Control Panel */
     .controls-card {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -100,7 +100,7 @@
       gap: 1rem;
     }
 
-    /* Unified Controls Row */
+    /* Controls Row */
     .search-row {
       display: flex;
       gap: 0.85rem;
@@ -160,7 +160,7 @@
       background-position: right 0.75rem center;
       background-size: 1.1em;
       flex: 1;
-      min-width: 150px;
+      min-width: 170px;
     }
 
     .select-dropdown:focus, .select-dropdown:hover {
@@ -183,7 +183,7 @@
       gap: 1.25rem;
     }
 
-    /* Product Card (Clickable Link Style) */
+    /* Product Card */
     .product-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -283,7 +283,7 @@
       color: var(--accent);
     }
 
-    /* Load More Container & Button */
+    /* Load More Button */
     .load-more-container {
       text-align: center;
       margin-top: 2rem;
@@ -329,7 +329,7 @@
       color: #94a3b8;
     }
 
-    /* Responsive Design / Mobile Optimization */
+    /* Mobile Responsiveness */
     @media (max-width: 640px) {
       header {
         padding: 2rem 1rem 3rem;
@@ -397,6 +397,14 @@
         <!-- Category Dropdown -->
         <select id="categorySelect" class="select-dropdown">
           <option value="all" selected>All Categories</option>
+          <option value="Wine">Wine</option>
+          <option value="Spirits">Spirits</option>
+          <option value="Beer & Malt">Beer & Malt</option>
+          <option value="Ready to Drink">Ready to Drink</option>
+          <option value="Beverages & Mixers">Beverages & Mixers</option>
+          <option value="Tobacco">Tobacco</option>
+          <option value="Cannabis & Hemp">Cannabis & Hemp</option>
+          <option value="Other">Other</option>
         </select>
 
         <!-- Sort Dropdown -->
@@ -419,7 +427,7 @@
       </div>
     </div>
 
-    <!-- Mobile-Optimized Load More Button -->
+    <!-- Load More Button -->
     <div id="loadMoreContainer" class="load-more-container" style="display: none;">
       <button id="loadMoreBtn" class="btn-load-more">
         <span>Load More Items</span>
@@ -432,7 +440,7 @@
     let rawProducts = [];
     let filteredProducts = [];
     
-    // Pagination controls for performance
+    // Pagination controls
     const ITEMS_PER_PAGE = 24;
     let currentPage = 1;
 
@@ -445,30 +453,99 @@
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
 
-    // Categorization Logic Helper
+    /**
+     * Enhanced Categorization Matching Algorithm
+     */
     function getCategory(name) {
-      const lower = name.toLowerCase();
+      const n = name.toUpperCase();
 
-      if (lower.includes('beer') || lower.includes('ipa') || lower.includes('ale') || lower.includes('lager') || lower.includes('stout') || lower.includes('pilsner') || lower.includes('cider') || lower.includes('seltzer') || lower.includes('4pk') || lower.includes('6pk') || lower.includes('12pk')) {
-        return 'Beer & Seltzers';
+      // 1. READY TO DRINK (Pre-mixed cocktails, RTD cans, hard teas, hard seltzers, canned cocktails)
+      if (
+        n.includes('HIGH NOON') || n.includes('CUTWATER') || n.includes('NUTR
+L') || n.includes('NUTRL') || 
+        n.includes('ON THE ROCKS') || n.includes('TWISTED TEA') || n.includes('SURFSIDE') || 
+        n.includes('HAPPY THURSDAY') || n.includes('MONACO') || n.includes('BUZZBALLZ') || 
+        n.includes('CLUBTAILS') || n.includes('BEATBOX') || n.includes('HARD SELTZER') || 
+        n.includes('HARD TEA') || n.includes('HARD LEMONADE') || n.includes('COCKTAIL CAN') ||
+        n.includes('RTD') || n.includes('READY TO DRINK') || n.includes('MARGARITA CAN')
+      ) {
+        return 'Ready to Drink';
       }
-      if (lower.includes('wine') || lower.includes('cabernet') || lower.includes('chardonnay') || lower.includes('pinot') || lower.includes('sauvignon') || lower.includes('merlot') || lower.includes('prosecco') || lower.includes('champagne') || lower.includes('rosé') || lower.includes('rose') || lower.includes('riesling')) {
-        return 'Wine';
+
+      // 2. TOBACCO (Cigars, Cigarettes, Chew, Nicotine Pouches, Vapes)
+      if (
+        n.includes('CIGAR') || n.includes('TOBACCO') || n.includes('CIGARETTE') || 
+        n.includes('ZYN') || n.includes('VELO') || n.includes('ROGUE') || n.includes('ON!') ||
+        n.includes('VAPE') || n.includes('JUUL') || n.includes('PUFF') || n.includes('DJO
+U') ||
+        n.includes('MARLBORO') || n.includes('NEWPORT') || n.includes('CAMEL') || n.includes('SWISHER') ||
+        n.includes('DUTCH') || n.includes('BACKWOODS') || n.includes('GAME') || n.includes('WRAP')
+      ) {
+        return 'Tobacco';
       }
-      if (lower.includes('vodka') || lower.includes('whiskey') || lower.includes('bourbon') || lower.includes('tequila') || lower.includes('rum') || lower.includes('gin') || lower.includes('liqueur') || lower.includes('cognac') || lower.includes('brandy') || lower.includes('scotch') || lower.includes('bitter')) {
+
+      // 3. CANNABIS & HEMP (CBD, Delta 9, Hemp drinks & edibles)
+      if (
+        n.includes('CBD') || n.includes('HEMP') || n.includes('DELTA 8') || n.includes('DELTA 9') || 
+        n.includes('DELTA-8') || n.includes('DELTA-9') || n.includes('THC') || n.includes('CANNABIS')
+      ) {
+        return 'Cannabis & Hemp';
+      }
+
+      // 4. SPIRITS (Vodka, Tequila, Whiskey, Bourbon, Rum, Gin, Cognac, Liqueurs, Shots, Brand Names)
+      if (
+        // Specific Types
+        n.includes('TEQUILA') || n.includes('VODKA') || n.includes('WHISKEY') || n.includes('WHISKY') || 
+        n.includes('BOURBON') || n.includes('RUM') || n.includes('GIN') || n.includes('COGNAC') || 
+        n.includes('BRANDY') || n.includes('SCOTCH') || n.includes('LIQUEUR') || n.includes('MEZCAL') || 
+        n.includes('SCHNAPPS') || n.includes('BITTERS') || n.includes('TRIPLE SEC') || n.includes('MOONSHINE') ||
+        // Popular Spirits Brands & Specific items (e.g. 1800 Coconut)
+        n.includes('1800') || n.includes('CASAMIGOS') || n.includes('PATRON') || n.includes('DON JULIO') || 
+        n.includes('TITO') || n.includes('GREY GOOSE') || n.includes('HENNESSY') || n.includes('JACK DANIEL') || 
+        n.includes('JIM BEAM') || n.includes('JAGERMEISTER') || n.includes('FIREBALL') || n.includes('CROWN ROYAL') || 
+        n.includes('BACARDI') || n.includes('CAPTAIN MORGAN') || n.includes('JAMESON') || n.includes('MAKERS MARK') ||
+        n.includes('JOSE CUERVO') || n.includes('TEREMANA') || n.includes('HERRADURA') || n.includes('ESPOLON') ||
+        n.includes('REPOSADO') || n.includes('BLANCO') || n.includes('AÑEJO') || n.includes('ANEJO')
+      ) {
         return 'Spirits';
       }
-      if (lower.includes('cigar') || lower.includes('tobacco') || lower.includes('cigarette') || lower.includes('vape') || lower.includes('zYN') || lower.includes('wrap')) {
-        return 'Cigars & Tobacco';
-      }
-      if (lower.includes('soda') || lower.includes('tonic') || lower.includes('water') || lower.includes('juice') || lower.includes('drink') || lower.includes('ice') || lower.includes('red bull') || lower.includes('monster')) {
-        return 'Beverages & Mixers';
-      }
-      if (lower.includes('chip') || lower.includes('snack') || lower.includes('candy') || lower.includes('gum') || lower.includes('nuts') || lower.includes('chocolate')) {
-        return 'Snacks & Food';
+
+      // 5. WINE (Red, White, Sparkling, Rosé, Champagne, Port, Brands)
+      if (
+        n.includes('WINE') || n.includes('CABERNET') || n.includes('CHARDONNAY') || n.includes('PINOT') || 
+        n.includes('SAUVIGNON') || n.includes('MERLOT') || n.includes('PROSECCO') || n.includes('CHAMPAGNE') || 
+        n.includes('ROSÉ') || n.includes('ROSE') || n.includes('RIESLING') || n.includes('MOSCATO') || 
+        n.includes('MALBEC') || n.includes('ZINFANDEL') || n.includes('PORT') || n.includes('SHIRAZ') ||
+        n.includes('SANGRIA') || n.includes('VERMOUTH') || n.includes('CHIANTI') || n.includes('BORDEAUX') ||
+        n.includes('CAVIT') || n.includes('BAREFOOT') || n.includes('WOODBRIDGE') || n.includes('SUTTER HOME')
+      ) {
+        return 'Wine';
       }
 
-      return 'Other / Misc';
+      // 6. BEER & MALT (Lagers, Ales, IPAs, Stouts, Malt Beverages, Pack Sizes)
+      if (
+        n.includes('BEER') || n.includes('IPA') || n.includes('ALE') || n.includes('LAGER') || 
+        n.includes('STOUT') || n.includes('PILSNER') || n.includes('CIDER') || n.includes('PORTER') ||
+        n.includes('HEFEWEIZEN') || n.includes('MALT') || n.includes('CORONA') || n.includes('MODELO') || 
+        n.includes('BUD LIGHT') || n.includes('BUDWEISER') || n.includes('COORS') || n.includes('MILLER') || 
+        n.includes('HEINEKEN') || n.includes('MICHELOB') || n.includes('STELLA ARTOIS') || n.includes('GUINNESS') ||
+        n.includes('4PK') || n.includes('6PK') || n.includes('12PK') || n.includes('18PK') || n.includes('24PK') || n.includes('30PK')
+      ) {
+        return 'Beer & Malt';
+      }
+
+      // 7. BEVERAGES & MIXERS (Soda, Water, Juice, Energy Drinks, Ice, Mixers)
+      if (
+        n.includes('SODA') || n.includes('TONIC') || n.includes('WATER') || n.includes('JUICE') || 
+        n.includes('RED BULL') || n.includes('MONSTER') || n.includes('GATORADE') || n.includes('COCA COLA') || 
+        n.includes('COKE') || n.includes('PEPSI') || n.includes('SPRITE') || n.includes('CLUB SODA') || 
+        n.includes('GINGER ALE') || n.includes('MARGARITA MIX') || n.includes('BLOODY MARY') || n.includes('SYRUP')
+      ) {
+        return 'Beverages & Mixers';
+      }
+
+      // 8. OTHER (Ice, Chips, Snacks, Misc non-beverage items)
+      return 'Other';
     }
 
     // Fetch and parse CSV
@@ -491,7 +568,7 @@
               processCSVData(results.data);
             },
             error: function() {
-              renderError('Failed to load items.csv. Please ensure the CSV file exists in the repository root.');
+              renderError('Failed to load CSV file. Please ensure the inventory CSV exists in your repository root.');
             }
           });
         }
@@ -533,19 +610,7 @@
         return true;
       });
 
-      populateCategoryDropdown();
       applyFiltersAndSort();
-    }
-
-    function populateCategoryDropdown() {
-      const categories = Array.from(new Set(rawProducts.map(p => p.category))).sort();
-      categorySelect.innerHTML = '<option value="all" selected>All Categories</option>';
-      categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        categorySelect.appendChild(opt);
-      });
     }
 
     function applyFiltersAndSort() {
