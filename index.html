@@ -605,10 +605,10 @@
       }
 
       productGrid.innerHTML = productsToDisplay.map(product => {
-        const aiPrompt = `Provide product details for ${product.name} ${product.size}. Include a short description, tasting notes, brand background, and an image if available. Focus only on this product.`;
-        const aiUrl = `https://chatgpt.com/?q=${encodeURIComponent(aiPrompt)}`;
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(product.name)}`;
+
         return `
-          <a href="${aiUrl}" target="_blank" rel="noopener noreferrer" class="product-card" title="View product information">
+          <a href="${googleSearchUrl}" target="_blank" rel="noopener noreferrer" class="product-card" title="Click to search on Google">
             <div class="product-details">
               <h3 class="product-name">${escapeHTML(product.name)}</h3>
               <div class="product-meta">
@@ -620,7 +620,7 @@
                 <span class="price-label">Price</span>
                 <span class="product-price">$${product.price.toFixed(2)}</span>
               </div>
-              <i class="fa-solid fa-circle-info search-icon-hint"></i>
+              <i class="fa-solid fa-arrow-up-right-from-square search-icon-hint"></i>
             </div>
           </a>
         `;
@@ -661,3 +661,4 @@
   </script>
 </body>
 </html>
+
